@@ -55,8 +55,14 @@ def decryptFile(filePath):
 def addGroup():
     try:
         section = input("Type the section name: ")
+        section = "[" + section + "]"
+
         user = input("Type the username: ")
+        user = "user="+user
+
         password = input("Type the password: ")
+        password = "password="+password
+
         text = section + '\n' + user + '\n' + password
         return text
     except:
