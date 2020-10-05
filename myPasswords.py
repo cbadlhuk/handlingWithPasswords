@@ -26,7 +26,7 @@ def readKey():
     finally:
         file.close()
 
-def cryptFile(filePath, content):
+def encryptFile(filePath, content):
     try:       
         auth = Fernet(readKey())        
         text = auth.encrypt(content.encode('utf-8'))
@@ -34,7 +34,7 @@ def cryptFile(filePath, content):
         file.write(text)
         return True
     except:
-        print("An error ocurred during cryptFile function")
+        print("An error ocurred during encryptFile function")
         return False
     finally:
         file.close()
@@ -65,8 +65,8 @@ def addGroup():
 
 print("What do you want to do?")
 print("1 - Generate the key")
-print("2 - Crypto the file")
-print("3 - Decrypto the file")
+print("2 - Encrypt the file")
+print("3 - Decrypt the file")
 print("4 - Add new group")
 
 option = int(input("Type now: "))
@@ -77,17 +77,17 @@ if option == 1:
     if generateKey(filePath):
         print("Your key was generated!")
 elif option == 2:
-    fileToCryptPath = input("Type the file location to crypt: ")
-    fileCryptedPath =  fileToCryptPath[0:fileToCryptPath.find(".txt")] + "_crypted.txt"
+    fileToEncryptPath = input("Type the file location to crypt: ")
+    fileEncryptedPath =  fileToEncryptPath[0:fileToEncryptPath.find(".txt")] + "_encrypted.txt"
 
     try:
-        file = open(fileToCryptPath, 'rt')
+        file = open(fileToEncryptPath, 'rt')
         file_content = file.read()
     finally:
         file.close()
 
-    if cryptFile(fileCryptedPath, file_content):
-        print("Your file "+ fileToCryptPath +" was crypted as "+ fileCryptedPath +"!")
+    if encryptFile(fileEncryptedPath, file_content):
+        print("Your file "+ fileToEncryptPath +" was encrypted as "+ fileEncryptedPath +"!")
 elif option == 3:
     filePath = input("Type the file location: ")
     text = decryptFile(filePath)

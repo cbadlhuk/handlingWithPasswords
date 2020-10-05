@@ -8,4 +8,3 @@ Here, basically we will consume 3 methods:
     generate_key
     encrypt
     decrypt
-
