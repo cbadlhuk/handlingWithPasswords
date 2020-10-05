@@ -1,5 +1,5 @@
 from cryptography.fernet import Fernet
-import os 
+import os
 
 def generateKey(filePath):
     try:
