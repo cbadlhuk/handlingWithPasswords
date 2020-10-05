@@ -102,8 +102,8 @@ elif option == 3:
         option = (input("Do you want to save the result to a file? [Y] or [N]")).upper()
 
         if option == "Y":
-            try:
-                new_filePath = filePath[0:filePath.find("_crypted.txt")] + "_decrypted.txt"
+            try:                
+                new_filePath = filePath[0:filePath.find("_encrypted.txt")] + "_decrypted.txt"
                 file = open(new_filePath, 'wt')
                 file.write(text)                 
             finally:
@@ -116,7 +116,7 @@ elif option == 4:
     new_text = addGroup()
     content = text + "\n" + new_text
 
-    if cryptFile(filePath, content):
+    if encryptFile(filePath, content):
         print("Your new section was added and the file "+ filePath +" was crypted!")
 else:
     print("Option invalid!")
