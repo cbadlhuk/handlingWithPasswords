@@ -1,8 +1,31 @@
 from cryptography.fernet import Fernet
 import os
 import tkinter
+from enum import Enum
 from tkinter.filedialog import askopenfilename
+from tkinter.filedialog import askdirectory
+from tkinter.filedialog import asksaveasfilename
+import logging
 
+class fileType(Enum):
+    fileEncrypted = 1
+    fileNotEncrypted = 2
+
+class option(Enum):
+    script = 1
+    user = 2
+
+def setLog():
+    logging.root.handlers = []
+    logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO, filename='Log.txt')
+
+    # set up logging to console
+    console = logging.StreamHandler()
+    console.setLevel(logging.ERROR)
+    # set a format which is simpler for console use
+    formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(message)s')
+    console.setFormatter(formatter)
+    logging.getLogger("").addHandler(console)
 
 def generateKey(filePath):
     try:
@@ -11,9 +34,10 @@ def generateKey(filePath):
         file.write(key)
         return True
     except:
-        print("An error occurred during generateKey function")
+        logging.error("An error occurred during generateKey function")
         return False
     finally:
+        logging.info("The personal key was generated")
         file.close()
 
 
@@ -25,9 +49,10 @@ def readKey():
         key = file.read()
         return key
     except:
-        print("An error occurred during readKey function")
+        logging.error("An error occurred during readKey function")
         return ""
     finally:
+        logging.info("The key was retrieved")
         file.close()
 
 
@@ -46,7 +71,7 @@ def encryptFile(fileToEncryptPath, fileEncryptedPath):
         file.write(text)
         return True
     except:
-        print("An error occurred during encryptFile function")
+        logging.error("An error occurred during encryptFile function")
         return False
     finally:
         file.close()
@@ -61,33 +86,35 @@ def decryptFile(filePath, option):
         text = text.decode('utf-8')
 
         if text != "":
-            if option == "script":
+            if option == option.script:
                 return text
             else:
                 x = 0
                 while x < 10:
-                    option = (input("Do you want to [S]ave the result to a file or [P]rint? [S] or [P]")).upper()
-                    if option == "S":
+                    inputOption = (input("Do you want to [S]ave the result to a file or [P]rint? [S] or [P]")).upper()
+                    if inputOption == "S":
                         try:
                             new_filePath = filePath[0:filePath.find("_encrypted.txt")] + "_decrypted.txt"
                             file = open(new_filePath, 'wt')
                             file.write(text)
                         finally:
                             file.close()
-                    elif option == "P":
+                    elif inputOption == "P":
+                        logging.info(text)
                         print(text)
                     else:
-                        print("This option is not valid, please try again!")
+                        logging.warning("This option is not valid, please try again!")
                     break
                 return True
     except:
-        print("An error occurred during decryptFile function")
+        logging.exception("An error occurred during decryptFile function")
         return False
     finally:
+        logging.info("The file is empty")
         file.close()
 
 
-def addGroup(filePath):
+def addGroup(filePath, fileType):
     try:
         section = input("Type the group name: ")
         section = "[" + section + "]"
@@ -98,7 +125,11 @@ def addGroup(filePath):
         password = input("Type the password: ")
         password = "password=" + password
 
-        file_content = decryptFile(filePath, "script")
+        if fileType == fileType.fileEncrypted:
+            file_content = decryptFile(filePath, option.script)
+        else:
+            file_content = ""
+
         content = section + '\n' + user + '\n' + password + "\n" + file_content
 
         try:
@@ -112,13 +143,13 @@ def addGroup(filePath):
             os.remove(temporary_filePath)
             return True
     except:
-        print("An error occurred during addGroup function")
+        logging.exception("An error occurred during addGroup function")
         return False
 
 
 def deleteGroup(filePath):
     try:
-        file_content = decryptFile(filePath, "script")
+        file_content = decryptFile(filePath, option.script)
         try:
             temporary_filePath = filePath[0:filePath.find("_encrypted.txt")] + "_tempFile.txt"
             file = open(temporary_filePath, 'wt')
@@ -164,52 +195,78 @@ def deleteGroup(filePath):
             return True
 
     except:
-        print("An error occurred during deleteGroup function")
+        logging.exception("An error occurred during deleteGroup function")
         return False
 
+def createFile(filePath):
+    try:
+        open(filePath, 'w')
+        addGroup(filePath, fileType.fileNotEncrypted)
+    except:
+        logging.exception("An error occurred during createFile function")
+        return False
 
 def Menu():
+    setLog()
+    logging.info("Starting the menu")
+
     print("What do you want to do?")
     print("1 - Generate the key")
     print("2 - Encrypt the file")
     print("3 - Decrypt the file")
     print("4 - Add new group")
     print("5 - Delete a group")
-    print("6 - Exit")
+    print("6 - Create new file")
+    print("7 - Exit")
 
-    option = int(input("Type now: "))
-    if option == 6:
+    inputOption = int(input("Type now: "))
+    if inputOption == 7:
         exit()
 
     tkinter.Tk().withdraw()
-    filePath = askopenfilename()
+    if inputOption != 1 and inputOption != 6:
+        filePath = askopenfilename()
 
-    if option == 1:
+    if inputOption == 1:
+        filePath = askdirectory()
         filePath = filePath + "\mykey.key"
         if generateKey(filePath):
             print("Your key was generated!")
+            logging.info("Your key was generated!")
             Menu()
 
-    elif option == 2:
+    elif inputOption == 2:
         fileEncryptedPath = filePath[0:filePath.find(".txt")] + "_encrypted.txt"
         if encryptFile(filePath, fileEncryptedPath):
             print("Your file " + filePath + " was encrypted as " + fileEncryptedPath + "!")
+            logging.info("Your file " + filePath + " was encrypted as " + fileEncryptedPath + "!")
             Menu()
 
-    elif option == 3:
-        if decryptFile(filePath, "user"):
+    elif inputOption == 3:
+        if decryptFile(filePath, option.user):
             print("Your file " + filePath + " was decrypted!")
+            logging.info("Your file " + filePath + " was decrypted!")
             Menu()
 
-    elif option == 4:
-        if addGroup(filePath):
+    elif inputOption == 4:
+        if addGroup(filePath, fileType.fileEncrypted):
             print("Your new group was added and the file " + filePath + " was encrypted!")
+            logging.info("Your new group was added and the file " + filePath + " was encrypted!")
             Menu()
 
-    elif option == 5:
+    elif inputOption == 5:
         if deleteGroup(filePath):
             print("Your group was deleted and the file " + filePath + " was encrypted!")
+            logging.info("Your group was deleted and the file " + filePath + " was encrypted!")
+            Menu()
+    elif inputOption == 6:
+        filePath = asksaveasfilename()
+        fileEncryptedPath = filePath[0:filePath.find(".txt")] + "_encrypted.txt"
+        if createFile(fileEncryptedPath):
+            print("Your file was created " + fileEncryptedPath + " and was encrypted!")
+            logging.info("Your file was created " + fileEncryptedPath + " and was encrypted!")
             Menu()
     else:
         print("Option invalid!")
+        logging.warning("Option invalid!")
 Menu()
